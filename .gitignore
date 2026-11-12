@@ -1,1 +1,28 @@
-numero-79.zip
+# Pacotes antigos / compactados
+*.zip
+
+# Dependências e builds (caso o projeto ganhe ferramentas no futuro)
+node_modules/
+dist/
+build/
+.cache/
+
+# Credenciais e variáveis de ambiente
+.env
+.env.*
+*.pem
+*.key
+
+# Logs e temporários
+*.log
+npm-debug.log*
+*.tmp
+*.bak
+~$*
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
