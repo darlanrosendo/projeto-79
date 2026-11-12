@@ -1,0 +1,558 @@
+/* =========================================================
+   Número 79 Interativo
+   --n controla o tamanho do número; tudo ao redor (faíscas,
+   brilho, contorno) é proporcional a ele.
+   ========================================================= */
+:root {
+  --n: min(46vw, 32dvh);
+
+  --azul: #1f6bff;
+  --vermelho: #ff2340;
+  --verde: #18d24a;
+  --amarelo: #ffd21f;
+  --roxo: #9b3cff;
+  --rosa: #ff3cc8;
+
+  --vidro: rgba(18, 22, 34, 0.72);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: "Fredoka", "Nunito", "Arial Rounded MT Bold", system-ui, sans-serif;
+  color: #fff;
+  background: #2a56d8;            /* nunca fica branco, mesmo antes da foto carregar */
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===================== Cena / fundo ===================== */
+.cena {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  isolation: isolate;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
+}
+
+/* foto da casa — sempre visível, só muda brilho/saturação */
+.fundo {
+  position: absolute;
+  inset: -2%;
+  z-index: -3;
+  background: #2a56d8 url("img/casa.jpg") 50% 58% / cover no-repeat;
+  transition: filter .6s ease, transform .6s ease;
+}
+
+/* luzes de festa por cima da foto (misturadas, não cobrem a casa) */
+.luzes {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  mix-blend-mode: overlay;
+  background-color: rgba(31, 107, 255, 0);
+  opacity: 0;
+  transition: opacity .6s ease;
+  pointer-events: none;
+}
+
+.feixe {
+  position: absolute;
+  width: 75vmax;
+  height: 75vmax;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  opacity: .55;
+}
+.feixe-1 { top: -35vmax; left: -30vmax; background: radial-gradient(circle, var(--rosa) 0%, transparent 62%); }
+.feixe-2 { bottom: -40vmax; right: -30vmax; background: radial-gradient(circle, #19e3ff 0%, transparent 62%); }
+.feixe-3 { top: 10%; left: 30%; width: 50vmax; height: 50vmax; background: radial-gradient(circle, var(--amarelo) 0%, transparent 60%); opacity: .35; }
+
+/* leve escurecida nas bordas e atrás do número para dar leitura */
+.vinheta {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 40% at 50% 42%, rgba(10, 10, 40, .28) 0%, transparent 100%),
+    radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 20, .45) 100%);
+}
+
+/* ---------- animações da imagem inteira (só com .ativa) ---------- */
+.cena.ativa .fundo { animation: fundoPisca 1.5s ease-in-out infinite; }
+.cena.ativa .luzes { opacity: 1; animation: festaCor 3s linear infinite; }
+.cena.ativa .feixe-1 { animation: passear1 4s ease-in-out infinite alternate; }
+.cena.ativa .feixe-2 { animation: passear2 5s ease-in-out infinite alternate; }
+.cena.ativa .feixe-3 { animation: passear3 3.2s ease-in-out infinite alternate; }
+
+@keyframes fundoPisca {
+  0%, 100% { filter: brightness(1)    saturate(1.15) hue-rotate(0deg);    transform: scale(1); }
+  25%      { filter: brightness(1.28) saturate(1.55) hue-rotate(-14deg);  transform: scale(1.012); }
+  50%      { filter: brightness(.86)  saturate(1.3)  hue-rotate(0deg);    transform: scale(1); }
+  75%      { filter: brightness(1.22) saturate(1.65) hue-rotate(16deg);   transform: scale(1.012); }
+}
+
+/* pulsos coloridos: azul → vermelho → verde → amarelo → roxo → rosa */
+@keyframes festaCor {
+  0%     { background-color: rgba(31, 107, 255, .70); }
+  8%     { background-color: rgba(31, 107, 255, .18); }
+  16.66% { background-color: rgba(255, 35, 64, .70); }
+  25%    { background-color: rgba(255, 35, 64, .18); }
+  33.33% { background-color: rgba(24, 210, 74, .70); }
+  41%    { background-color: rgba(24, 210, 74, .18); }
+  50%    { background-color: rgba(255, 210, 31, .70); }
+  58%    { background-color: rgba(255, 210, 31, .18); }
+  66.66% { background-color: rgba(155, 60, 255, .70); }
+  75%    { background-color: rgba(155, 60, 255, .18); }
+  83.33% { background-color: rgba(255, 60, 200, .70); }
+  91%    { background-color: rgba(255, 60, 200, .18); }
+  100%   { background-color: rgba(31, 107, 255, .70); }
+}
+
+@keyframes passear1 { to { transform: translate(55vw, 45vh); } }
+@keyframes passear2 { to { transform: translate(-50vw, -40vh); } }
+@keyframes passear3 { from { transform: translate(-30vw, 10vh) scale(.8); } to { transform: translate(20vw, -15vh) scale(1.2); } }
+
+/* ===================== Palco: número + pronúncia ===================== */
+.palco {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 2.2dvh, 22px);
+  padding: 12px 16px 0;
+}
+
+/* ---------- "Hello Ben" acima do número ---------- */
+.saudacao {
+  font-size: calc(var(--n) * .3);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  color: #ffe14d;
+  text-shadow:
+    0 0 2px rgba(20, 0, 60, .9),
+    0 2px 0 rgba(20, 0, 60, .8),
+    0 0 12px currentColor,
+    0 0 26px currentColor,
+    0 5px 6px rgba(0, 0, 0, .45);
+  margin-bottom: calc(var(--n) * -.02);
+  user-select: none;
+  /* muda de cor o tempo todo, mesmo parado */
+  animation: corSaudacao 2.4s linear infinite;
+}
+.cena.ativa .saudacao {
+  animation: corSaudacao 1.2s linear infinite, saltar .6s ease-in-out infinite alternate;
+}
+@keyframes corSaudacao {
+  0%, 100% { color: #ffe14d; }  /* amarelo */
+  16.66%   { color: #ff4fd8; }  /* rosa */
+  33.33%   { color: #3fe0ff; }  /* azul-claro */
+  50%      { color: #4dff6a; }  /* verde */
+  66.66%   { color: #ff7a2e; }  /* laranja */
+  83.33%   { color: #c77dff; }  /* roxo */
+}
+@keyframes saltar {
+  from { transform: translateY(0) rotate(-2deg); }
+  to   { transform: translateY(calc(var(--n) * -.04)) rotate(2deg); }
+}
+
+.numero-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--n) * .04);
+}
+
+.faiscas {
+  width: calc(var(--n) * .26);
+  height: calc(var(--n) * .26);
+  flex-shrink: 0;
+  overflow: visible;
+  stroke: #ffe14d;
+  stroke-width: 9;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px #fff2a0) drop-shadow(0 0 10px #ffb800);
+}
+.cena.ativa .faiscas-esq { animation: faisca .5s ease-in-out infinite alternate; transform-origin: right center; }
+.cena.ativa .faiscas-dir { animation: faisca .5s ease-in-out infinite alternate; transform-origin: left center; }
+@keyframes faisca {
+  from { transform: scale(.82); opacity: .7; }
+  to   { transform: scale(1.12); opacity: 1; }
+}
+
+/* a cor muda girando o matiz do conjunto (gradiente + brilho) */
+.numero-cor { transition: filter .6s ease; }
+@keyframes trocarCor {
+  from { filter: hue-rotate(0deg); }
+  to   { filter: hue-rotate(360deg); }
+}
+
+.numero-cor { position: relative; isolation: isolate; }
+
+.numero, .numero-cor::before, .numero-cor::after {
+  font-size: var(--n);
+  font-weight: 700;
+  line-height: .92;
+  letter-spacing: -0.04em;
+  padding: 0 .04em;
+  text-align: center;
+}
+
+/* camada da frente: só o preenchimento em degradê */
+.numero {
+  position: relative;
+  z-index: 2;
+  user-select: none;
+  background: linear-gradient(165deg, #3a1cff 0%, #1f5bff 32%, #12a8ff 62%, #1cf3d8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* camada do meio: contorno branco + brilho neon (fica atrás do degradê,
+   então só a parte de fora do contorno aparece — sem linhas internas) */
+.numero-cor::after {
+  content: attr(data-texto);
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  -webkit-text-stroke: max(6px, calc(var(--n) * .056)) #fff;
+  filter:
+    drop-shadow(0 0 2px #fff)
+    drop-shadow(0 0 calc(var(--n) * .04) #ff3cf2)
+    drop-shadow(0 0 calc(var(--n) * .1) #7a3cff);
+  pointer-events: none;
+}
+
+/* halo neon atrás do número — é ele que pulsa */
+.numero-cor::before {
+  content: attr(data-texto);
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  color: #ff4dff;
+  -webkit-text-fill-color: #ff4dff;
+  -webkit-text-stroke: calc(var(--n) * .06) #b44dff;
+  filter: blur(calc(var(--n) * .08));
+  opacity: .45;
+}
+.cena.ativa .numero-cor { animation: trocarCor 4s linear infinite, pulsoNumero 1s ease-in-out infinite; }
+.cena.ativa .numero-cor::before { animation: pulsoHalo 1s ease-in-out infinite; }
+
+@keyframes pulsoNumero {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+@keyframes pulsoHalo {
+  0%, 100% { opacity: .3; }
+  50%      { opacity: 1; }
+}
+
+/* ---------- etiqueta "Seven Nine" ---------- */
+.pronuncia {
+  position: relative;
+  display: flex;
+  align-items: center;
+  font-size: clamp(1.3rem, min(6.4vw, 5.6dvh), 3.1rem);
+}
+/* cápsula azul mais larga por trás */
+.pronuncia::before {
+  content: "";
+  position: absolute;
+  inset: 14% 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(40, 46, 170, .92), rgba(22, 24, 110, .92));
+  border: 2px solid #3fb4ff;
+  box-shadow: 0 0 14px rgba(63, 180, 255, .7);
+  z-index: -1;
+}
+.pronuncia-texto {
+  display: flex;
+  align-items: center;
+  gap: .4em;
+  padding: .18em .9em;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #4a1fc4 0%, #2c0f8a 55%, #22086e 100%);
+  border: 3px solid #f04bff;
+  box-shadow:
+    0 0 12px #e43cff,
+    0 0 28px rgba(228, 60, 255, .55),
+    inset 0 2px 0 rgba(255, 255, 255, .25);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .35);
+  transition: transform .2s ease;
+}
+.pronuncia-texto .ico { width: 1.05em; height: 1.05em; }
+
+.ondas {
+  display: flex;
+  align-items: center;
+  gap: .14em;
+  padding: 0 .55em;
+  height: 1em;
+}
+.ondas i {
+  display: block;
+  width: .12em;
+  height: 60%;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #8cf3ff, #b44dff);
+  box-shadow: 0 0 6px #6fe6ff;
+}
+.ondas i:nth-child(2), .ondas i:nth-child(3) { height: 95%; }
+.ondas i:nth-child(4) { height: 45%; }
+
+.pronuncia.falando .pronuncia-texto { transform: scale(1.06); }
+.pronuncia.falando .ondas i { animation: equalizador .45s ease-in-out infinite alternate; }
+.pronuncia.falando .ondas i:nth-child(2) { animation-delay: -.15s; }
+.pronuncia.falando .ondas i:nth-child(3) { animation-delay: -.3s; }
+.pronuncia.falando .ondas i:nth-child(4) { animation-delay: -.08s; }
+@keyframes equalizador {
+  from { transform: scaleY(.35); }
+  to   { transform: scaleY(1.15); }
+}
+
+/* ===================== Controles ===================== */
+.controles {
+  width: min(1180px, 100% - 32px);
+  margin: 0 auto;
+  padding: clamp(10px, 2dvh, 24px) 0 max(14px, env(safe-area-inset-bottom, 0px));
+  display: grid;
+  gap: clamp(8px, 1.6dvh, 16px);
+}
+
+.botoes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(10px, 2vw, 24px);
+}
+
+.ico { width: 1.15em; height: 1.15em; flex-shrink: 0; }
+
+.btn {
+  --claro: #5ce85a; --meio: #14a823; --escuro: #076b16; --brilho: #7dff6a;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55em;
+  min-height: 64px;
+  padding: .45em 1em;
+  font: inherit;
+  font-size: clamp(1.1rem, 2.5vw, 2rem);
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: #fff;
+  white-space: nowrap;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .3);
+  border-radius: 999px;
+  border: 3px solid rgba(255, 255, 255, .9);
+  background: linear-gradient(180deg, var(--claro) 0%, var(--meio) 52%, var(--escuro) 100%);
+  box-shadow:
+    0 0 0 2px var(--escuro),
+    0 0 18px var(--brilho),
+    0 6px 0 2px var(--escuro),
+    0 12px 22px rgba(0, 0, 0, .45),
+    inset 0 -6px 12px rgba(0, 0, 0, .22);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform .1s ease, box-shadow .1s ease, opacity .2s ease, filter .2s ease;
+  overflow: hidden;
+}
+/* reflexo brilhante na metade de cima */
+.btn::before {
+  content: "";
+  position: absolute;
+  left: 6%; right: 6%; top: 5%;
+  height: 42%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, .05));
+  pointer-events: none;
+}
+.btn > * { position: relative; }
+
+.btn:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow:
+    0 0 0 2px var(--escuro),
+    0 0 18px var(--brilho),
+    0 1px 0 2px var(--escuro),
+    0 4px 10px rgba(0, 0, 0, .45),
+    inset 0 -6px 12px rgba(0, 0, 0, .22);
+}
+.btn:disabled { opacity: .55; filter: saturate(.55); cursor: not-allowed; }
+
+.btn-parar   { --claro: #ff6b6b; --meio: #e11d1d; --escuro: #8e0909; --brilho: #ff5a5a; }
+.btn-repetir { --claro: #4f97ff; --meio: #1452e0; --escuro: #0a2a90; --brilho: #4fc3ff; }
+
+.btn:focus-visible, .opcao:focus-visible, .opcao:has(input:focus-visible) {
+  outline: 3px solid var(--amarelo);
+  outline-offset: 4px;
+}
+
+/* ---------- barra de opções ---------- */
+.opcoes {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px clamp(14px, 3vw, 40px);
+  width: min(100%, 1020px);
+  padding: .35em 1.4em;
+  font-size: clamp(1rem, 1.9vw, 1.55rem);
+  border-radius: 999px;
+  background: var(--vidro);
+  border: 2px solid rgba(255, 255, 255, .35);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.opcao {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: .55em;
+  min-height: 48px;
+  padding: 4px 6px;
+  font: inherit;
+  font-weight: 500;
+  color: #fff;
+  background: none;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+.opcao strong { font-weight: 600; }
+.opcao .ico { width: 1.4em; height: 1.4em; }
+
+.divisor {
+  width: 2px;
+  height: 1.6em;
+  background: rgba(255, 255, 255, .4);
+  border-radius: 2px;
+}
+
+/* chave liga/desliga */
+.chave {
+  width: 2.6em;
+  height: 1.45em;
+  border-radius: 999px;
+  background: #5b6170;
+  position: relative;
+  transition: background .2s;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .35);
+}
+.chave-bolinha {
+  position: absolute;
+  top: .15em; left: .15em;
+  width: 1.15em; height: 1.15em;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .35);
+  transition: transform .2s;
+}
+.opcao[aria-checked="true"] .chave { background: linear-gradient(180deg, #2ee84a, #0fb02a); box-shadow: 0 0 10px rgba(46, 232, 74, .7); }
+.opcao[aria-checked="true"] .chave-bolinha { transform: translateX(1.15em); }
+
+.ico-mudo { display: none; }
+.opcao[aria-checked="false"] .ico-ondas { display: none; }
+.opcao[aria-checked="false"] .ico-mudo { display: inline; }
+
+/* caixa de seleção */
+.opcao input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.caixa {
+  display: grid;
+  place-items: center;
+  width: 1.45em;
+  height: 1.45em;
+  border-radius: .3em;
+  border: 2px solid rgba(255, 255, 255, .7);
+  transition: background .2s, border-color .2s;
+}
+.caixa svg { width: 1.05em; height: 1.05em; color: #fff; opacity: 0; transition: opacity .15s; }
+.opcao input:checked + .caixa { background: linear-gradient(180deg, #3d8bff, #1652e6); border-color: #8cc4ff; box-shadow: 0 0 10px rgba(61, 139, 255, .7); }
+.opcao input:checked + .caixa svg { opacity: 1; }
+
+/* ---------- aviso (toast) ---------- */
+.aviso {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 10px 18px;
+  border-radius: 16px;
+  background: var(--vidro);
+  border: 1px solid rgba(255, 255, 255, .3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 1rem;
+  text-align: center;
+  z-index: 5;
+}
+
+/* ===================== Responsividade ===================== */
+
+/* celulares em pé: INICIAR + PARAR lado a lado, REPETIR VOZ embaixo */
+@media (max-width: 640px) {
+  .botoes { grid-template-columns: 1fr 1fr; }
+  .btn-repetir { grid-column: 1 / -1; }
+  .btn { font-size: clamp(1.05rem, 5vw, 1.4rem); min-height: 58px; padding: .4em .7em; }
+}
+
+/* telas estreitas: opções empilhadas */
+@media (max-width: 520px) {
+  .opcoes { flex-direction: column; gap: 0; border-radius: 22px; padding: .25em 1em; }
+  .divisor { width: 80%; height: 1px; }
+  .opcao { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 340px) {
+  :root { --n: min(42vw, 30dvh); }
+  .pronuncia { font-size: 1.15rem; }
+  .ondas { padding: 0 .35em; }
+}
+
+/* celular deitado (pouca altura) */
+@media (max-height: 560px) and (orientation: landscape) {
+  :root { --n: min(24vw, 25dvh); }
+  .palco { gap: 6px; padding-top: 6px; }
+  .pronuncia { font-size: clamp(1rem, 5dvh, 1.6rem); }
+  .controles { width: min(900px, 100% - 32px); padding-top: 8px; gap: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
+  .botoes { grid-template-columns: repeat(3, 1fr); }
+  .btn-repetir { grid-column: auto; }
+  .btn { min-height: 48px; font-size: clamp(.95rem, 2.4vw, 1.25rem); padding: .3em .8em; }
+  .opcoes { flex-direction: row; border-radius: 999px; font-size: 1rem; padding: 0 1em; }
+  .divisor { width: 2px; height: 1.4em; }
+  .opcao { width: auto; min-height: 44px; }
+}
+
+/* quem pede menos movimento: mesmos efeitos, mais lentos e suaves */
+@media (prefers-reduced-motion: reduce) {
+  .cena.ativa .fundo { animation-duration: 4s; }
+  .cena.ativa .luzes { animation-duration: 9s; }
+  .cena.ativa .numero-cor { animation-duration: 12s, 3s; }
+  .cena.ativa .numero-cor::before { animation-duration: 3s; }
+  .cena.ativa .feixe, .cena.ativa .faiscas { animation: none; }
+  .saudacao, .cena.ativa .saudacao { animation: corSaudacao 8s linear infinite; }
+}

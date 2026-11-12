@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f3fd6">
+  <title>Número 79 Interativo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Os arquivos ficam na mesma pasta do index.html -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="cena" id="cena">
+    <!-- Camadas do fundo: foto + luzes de festa (animadas separadamente) -->
+    <div class="fundo" id="fundo" aria-hidden="true"></div>
+    <div class="luzes" aria-hidden="true">
+      <span class="feixe feixe-1"></span>
+      <span class="feixe feixe-2"></span>
+      <span class="feixe feixe-3"></span>
+    </div>
+    <div class="vinheta" aria-hidden="true"></div>
+
+    <main class="palco">
+      <p class="saudacao">Hello Ben</p>
+
+      <div class="numero-area">
+        <svg class="faiscas faiscas-esq" viewBox="0 0 100 100" aria-hidden="true">
+          <line x1="90" y1="38" x2="30" y2="10" />
+          <line x1="88" y1="56" x2="12" y2="56" />
+          <line x1="90" y1="74" x2="40" y2="98" />
+        </svg>
+
+        <div class="numero-cor" data-texto="79">
+          <h1 class="numero" id="numero">79</h1>
+        </div>
+
+        <svg class="faiscas faiscas-dir" viewBox="0 0 100 100" aria-hidden="true">
+          <line x1="10" y1="38" x2="70" y2="10" />
+          <line x1="12" y1="56" x2="88" y2="56" />
+          <line x1="10" y1="74" x2="60" y2="98" />
+        </svg>
+      </div>
+
+      <div class="pronuncia" id="pronuncia">
+        <span class="ondas ondas-esq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <p class="pronuncia-texto">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 9v6h4l5 5V4L7 9H3z" fill="currentColor"/>
+            <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+          <span>Seven Nine</span>
+        </p>
+        <span class="ondas ondas-dir" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </div>
+    </main>
+
+    <nav class="controles" aria-label="Controles">
+      <div class="botoes">
+        <button class="btn btn-iniciar" id="btnIniciar" type="button">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>
+          <span>INICIAR</span>
+        </button>
+        <button class="btn btn-parar" id="btnParar" type="button" disabled>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1.2" fill="currentColor"/><rect x="14" y="4.5" width="4.5" height="15" rx="1.2" fill="currentColor"/></svg>
+          <span>PARAR</span>
+        </button>
+        <button class="btn btn-repetir" id="btnRepetir" type="button">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 11a8 8 0 0 0-14.3-4.6"/><path d="M5.2 2.8v4h4"/>
+            <path d="M4 13a8 8 0 0 0 14.3 4.6"/><path d="M18.8 21.2v-4h-4"/>
+          </svg>
+          <span>REPETIR VOZ</span>
+        </button>
+      </div>
+
+      <div class="opcoes">
+        <button class="opcao" id="btnSom" type="button" role="switch" aria-checked="true">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 9v6h4l5 5V4L7 9H3z" fill="currentColor"/>
+            <path class="ico-ondas" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path class="ico-mudo" d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+          <span>Som: <strong id="txtSom">Ligado</strong></span>
+          <span class="chave" aria-hidden="true"><span class="chave-bolinha"></span></span>
+        </button>
+
+        <span class="divisor" aria-hidden="true"></span>
+
+        <label class="opcao">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 11a8 8 0 0 0-14.3-4.6"/><path d="M5.2 2.8v4h4"/>
+            <path d="M4 13a8 8 0 0 0 14.3 4.6"/><path d="M18.8 21.2v-4h-4"/>
+          </svg>
+          <span>Repetir a cada 1,5 s</span>
+          <input type="checkbox" id="chkAuto" checked>
+          <span class="caixa" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </label>
+      </div>
+    </nav>
+
+    <p class="aviso" id="aviso" role="status" aria-live="polite" hidden></p>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
